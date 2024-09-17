@@ -1,0 +1,11 @@
+{
+  "name": "gh-project-api",
+  "module": "src/collect-pick-info.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
