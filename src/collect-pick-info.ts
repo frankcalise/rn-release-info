@@ -125,11 +125,15 @@ async function queryProjectInbox({
     const targetReleaseField = filteredFieldValues.find(
       (field: any) => field?.field.name === "Target Release"
     );
+    const titleField = filteredFieldValues.find(
+      (field: any) => field?.field.name === "Title"
+    );
 
     if (statusField !== undefined && targetReleaseField !== undefined) {
       return (
         statusField.name === "Done / Picked" &&
-        (targetReleaseField.name as string).indexOf(targetRelease) > -1
+        (targetReleaseField.name as string).indexOf(targetRelease) > -1 &&
+        titleField.text.indexOf("Test Report") === -1
       );
     }
     return false;
@@ -195,6 +199,7 @@ if (!targetRelease) {
 }
 
 const itemsToDiscuss: string[] = [];
+let pickCount = 0;
 
 const projectID = await queryProjectID(targetRelease);
 const inboxIssues = await queryProjectInbox({ projectID, targetRelease });
@@ -237,10 +242,16 @@ for (const issue of inboxIssues) {
     }
   }
 
-  output.forEach((line) => console.log(`${flagged ? "! " : ""} ${line}`));
+  if (output.length > 0) {
+    pickCount += output.length;
+    output.forEach((line) => console.log(`${flagged ? "! " : ""} ${line}`));
+  } else {
+    itemsToDiscuss.push(`#${issueNumber} - ${issueTitle}`);
+  }
 }
 
+console.log(`\nTotal picks (${pickCount})`);
 if (itemsToDiscuss.length > 0) {
-  console.log("\nTo discuss:");
+  console.log(`\nTo discuss (${itemsToDiscuss.length}):`);
   itemsToDiscuss.forEach((item) => console.log(item));
 }
