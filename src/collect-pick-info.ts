@@ -12,7 +12,11 @@
  *    b. Record the hash and datetime
  */
 
-import { findMergeComment, parsePullRequestLinks } from "./parsing-utils";
+import {
+  findMergeComment,
+  parseCommitLinks,
+  parsePullRequestLinks,
+} from "./parsing-utils";
 
 // Account for Original and Pick to 0.76 links
 // Can be multiple pick links
@@ -92,6 +96,7 @@ async function queryProjectInbox({
                   number
                   title
                   body
+                  createdAt
                 }
               }
             }
@@ -123,7 +128,7 @@ async function queryProjectInbox({
 
     if (statusField !== undefined && targetReleaseField !== undefined) {
       return (
-        statusField.name === "Inbox" &&
+        statusField.name === "Done / Picked" &&
         (targetReleaseField.name as string).indexOf(targetRelease) > -1
       );
     }
@@ -164,46 +169,11 @@ async function queryPullRequest(num: number) {
     data.repository.pullRequest.comments.nodes
   );
 
-  console.log({ mergeInfo });
+  return mergeInfo;
 }
 
-async function queryIssue(num: number) {
-  // Replace placeholders with actual values
-  const owner = "asdf";
-  const repo = "asdf";
-
-  const query = `
-    {
-      repository(owner: "${owner}", name: "${repo}") {
-        issue(number: ${num}) {
-          title
-          body
-          createdAt
-          author {
-            login
-          }
-          comments(first: 10) {
-            nodes {
-              author {
-                login
-              }
-              body
-              createdAt
-            }
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  const proc = Bun.spawn(["gh", "api", "graphql", "-f", `query=${query}`]);
-
-  const output = await new Response(proc.stdout).text();
-  console.log(output);
+function formatResultLine(commitHash: string, date: string, title: string) {
+  return `${commitHash.substring(0, 7)} : ${date} : ${title}`;
 }
 
 // accept argument from bun argv
@@ -224,6 +194,8 @@ if (!targetRelease) {
   }
 }
 
+const itemsToDiscuss: string[] = [];
+
 const projectID = await queryProjectID(targetRelease);
 const inboxIssues = await queryProjectInbox({ projectID, targetRelease });
 
@@ -232,14 +204,43 @@ for (const issue of inboxIssues) {
   const issueNumber = issue.content.number;
   const issueTitle = issue.content.title;
   const issueBody = issue.content.body;
+  const issueCreatedAt = issue.content.createdAt;
+  let flagged = false;
+  const output: string[] = [];
 
+  // look for pull requests in the issue body
   const pullRequestLinks = parsePullRequestLinks(issueBody);
-  for (const pullRequest of pullRequestLinks) {
-    // get the pull request number on the end
-    const prData = await queryPullRequest(
-      Number.parseInt(pullRequest.substring(pullRequest.lastIndexOf("/") + 1))
-    );
+  if (pullRequestLinks.length > 0) {
+    for (const pullRequest of pullRequestLinks) {
+      // get the pull request number on the end
+      const prData = await queryPullRequest(
+        Number.parseInt(pullRequest.substring(pullRequest.lastIndexOf("/") + 1))
+      );
 
-    console.log(prData);
+      if (prData) {
+        output.push(
+          formatResultLine(prData.commitHash, issueCreatedAt, issueTitle)
+        );
+      } else {
+        flagged = true;
+        itemsToDiscuss.push(`#${issueNumber} - ${issueTitle} (${pullRequest})`);
+      }
+    }
   }
+
+  // look for commits in the issue body
+  const commitLinks = parseCommitLinks(issueBody);
+  if (commitLinks.length > 0) {
+    for (const commit of commitLinks) {
+      const commitHash = commit.substring(commit.lastIndexOf("/") + 1);
+      output.push(formatResultLine(commitHash, issueCreatedAt, issueTitle));
+    }
+  }
+
+  output.forEach((line) => console.log(`${flagged ? "! " : ""} ${line}`));
+}
+
+if (itemsToDiscuss.length > 0) {
+  console.log("\nTo discuss:");
+  itemsToDiscuss.forEach((item) => console.log(item));
 }
