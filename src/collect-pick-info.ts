@@ -210,6 +210,7 @@ for (const issue of inboxIssues) {
   const issueTitle = issue.content.title;
   const issueBody = issue.content.body;
   const issueCreatedAt = issue.content.createdAt;
+  const issueURL = issue.content.url;
   let flagged = false;
   const output: string[] = [];
 
@@ -242,11 +243,11 @@ for (const issue of inboxIssues) {
     }
   }
 
-  if (output.length > 0) {
+  if (output.length > 0 && !flagged) {
     pickCount += output.length;
-    output.forEach((line) => console.log(`${flagged ? "! " : ""} ${line}`));
+    output.forEach((line) => console.log(line));
   } else {
-    itemsToDiscuss.push(`#${issueNumber} - ${issueTitle}`);
+    itemsToDiscuss.push(`#${issueNumber} : ${issueTitle} : ${issueURL}`);
   }
 }
 
