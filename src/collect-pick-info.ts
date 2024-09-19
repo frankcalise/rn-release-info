@@ -85,8 +85,14 @@ for (const issue of inboxIssues) {
     for (const commit of commitLinks) {
       const commitHash = commit.substring(commit.lastIndexOf("/") + 1);
       const commitInfo = await queryCommitInfo(commitHash);
+      const parseCommitMessage = commitInfo.message.split("\n");
+
       output.push(
-        formatResultLine(commitHash, commitInfo.committedDate, issueTitle)
+        formatResultLine(
+          commitHash,
+          commitInfo.committedDate,
+          `${issueTitle} (${parseCommitMessage[0]})`
+        )
       );
     }
   }
