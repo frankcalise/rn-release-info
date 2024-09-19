@@ -74,9 +74,16 @@ export function parseCommitLinks(issueBody: string): string[] {
     // sometimes they're tucked away in the description field
     const descriptionContent = getDescriptionSection(issueBody);
 
-    // Find all matches of the pull request links
-    const descriptionMatches = descriptionContent.match(commitLinkRegex);
-    return descriptionMatches || [];
+    if (descriptionContent.length === 0) {
+      // try to just match commit bullets in the entire body from
+      // submissions not following the GH template (huntie xD)
+      const bodyMatches = issueBody.match(commitLinkRegex);
+      return bodyMatches || [];
+    } else {
+      // Find all matches of the pull request links
+      const descriptionMatches = descriptionContent.match(commitLinkRegex);
+      return descriptionMatches || [];
+    }
   }
 
   return matches || [];
