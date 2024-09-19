@@ -111,7 +111,8 @@ export async function queryProjectInbox({
 
     if (statusField !== undefined && targetReleaseField !== undefined) {
       return (
-        statusField.name === "Done / Picked" &&
+        // TODO if this is an older RC that you want to check how it would have run, status needs to be Done / Picked
+        statusField.name === "Inbox" &&
         (targetReleaseField.name as string).indexOf(targetRelease) > -1 &&
         titleField.text.indexOf("Test Report") === -1
       );
