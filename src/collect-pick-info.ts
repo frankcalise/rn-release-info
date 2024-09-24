@@ -20,12 +20,23 @@ import {
   queryPullRequest,
 } from "./queries";
 
+// accept sort argument from bun argv, either "asc" or "desc" from --sort=asc
+const sortArg = process.argv.includes("--sort")
+  ? process.argv[process.argv.indexOf("--sort") + 1]
+  : "desc";
+
+// accept verbose from bun argv as --verbose or -v
+const verboseArg =
+  process.argv.includes("--verbose") || process.argv.includes("-v");
+
 function formatResultLine(commitHash: string, date: string, title: string) {
-  return `${commitHash.substring(0, 7)} : ${date} : ${title}`;
+  const line = `${commitHash.substring(0, 7)} : ${date}`;
+  return verboseArg ? `${line} : ${title}` : line;
 }
 
 // accept argument from bun argv
 const targetRelease = process.argv[2];
+
 if (!targetRelease) {
   console.error("Please provide a targetRelease in the format of '0.76.0-rc3'");
   process.exit(1);
@@ -48,19 +59,23 @@ let pickCount = 0;
 const projectID = await queryProjectID(targetRelease);
 const inboxIssues = await queryProjectInbox({ projectID, targetRelease });
 
+interface PickInfo {
+  commitHash: string;
+  createdAt: string;
+  title: string;
+}
+
+const allPickItems: PickInfo[] = [];
+
 // foreach issue in inboxIssues, call query issue
 for (const issue of inboxIssues) {
-  const issueNumber = issue.content.number;
-  const issueTitle = issue.content.title;
-  const issueBody = issue.content.body;
-  const issueCreatedAt = issue.content.createdAt;
-  const issueURL = issue.content.url;
+  const { number: issueNumber, title, body, createdAt, url } = issue.content;
 
   let flagged = false;
-  const output: string[] = [];
+  const output: PickInfo[] = [];
 
   // look for pull requests in the issue body
-  const pullRequestLinks = parsePullRequestLinks(issueBody);
+  const pullRequestLinks = parsePullRequestLinks(body);
   if (pullRequestLinks.length > 0) {
     for (const pullRequest of pullRequestLinks) {
       // get the pull request number on the end
@@ -69,43 +84,51 @@ for (const issue of inboxIssues) {
       );
 
       if (prData) {
-        output.push(
-          formatResultLine(prData.commitHash, issueCreatedAt, issueTitle)
-        );
+        output.push({ commitHash: prData.commitHash, createdAt, title });
       } else {
         flagged = true;
+        // TODO
+        // item has a PR but no commit info yet (could be a PR to the target release branch directly)
         // itemsToDiscuss.push(`#${issueNumber} - ${issueTitle} (${pullRequest})`);
       }
     }
   }
 
   // look for commits in the issue body
-  const commitLinks = parseCommitLinks(issueBody);
+  const commitLinks = parseCommitLinks(body);
   if (commitLinks.length > 0) {
     for (const commit of commitLinks) {
       const commitHash = commit.substring(commit.lastIndexOf("/") + 1);
       const commitInfo = await queryCommitInfo(commitHash);
       const parseCommitMessage = commitInfo.message.split("\n");
 
-      output.push(
-        formatResultLine(
-          commitHash,
-          commitInfo.committedDate,
-          `${issueTitle} (${parseCommitMessage[0]})`
-        )
-      );
+      output.push({
+        commitHash: commitHash,
+        createdAt: commitInfo.committedDate,
+        title: `${title} (${parseCommitMessage[0]})`,
+      });
     }
   }
 
   if (output.length > 0 && !flagged) {
-    pickCount += output.length;
-    output.forEach((line) => console.log(line));
+    allPickItems.push(...output);
   } else {
-    itemsToDiscuss.push(`#${issueNumber} : ${issueTitle} : ${issueURL}`);
+    itemsToDiscuss.push(`#${issueNumber} : ${title} : ${url}`);
   }
 }
 
-console.log(`\nTotal picks (${pickCount})`);
+// sort allPickItems by date depending on sortArg
+const sortedPicks = allPickItems.sort((a, b) => {
+  return sortArg === "asc"
+    ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+});
+
+for (const pick of sortedPicks) {
+  console.log(formatResultLine(pick.commitHash, pick.createdAt, pick.title));
+}
+
+console.log(`\nTotal picks (${allPickItems.length})`);
 if (itemsToDiscuss.length > 0) {
   console.log(`\nTo discuss (${itemsToDiscuss.length}):`);
   itemsToDiscuss.forEach((item) => console.log(item));
