@@ -7,10 +7,40 @@ A project to help automate some recurring tasks during a React Native release fo
 Change the RC version to the project items that need to be picked (items will be in Inbox)
 
 ```bash
-bun run src/collect-pick-info.ts 0.76.0-rc1
+bun run src/collect-pick-info.ts 0.76.0-rc1 --sort asc
 ```
 
+## Options
+
+`--sort asc|desc`
+Sorts picks by date ascending or descending
+
+`--verbose`
+Outputs title from project issue / PR / commit info in addition to the commit hash and date
+
 ## Output
+
+### Standard
+
+```
+Target release 0.76.0-rc2
+8ac80e3 : 2024-09-10T15:55:34Z
+b98b9f1 : 2024-09-13T13:33:30Z
+38a4905 : 2024-09-16T15:25:12Z
+cf42288 : 2024-09-17T09:34:06Z
+1e59f2e : 2024-09-17T16:11:26Z
+8972d09 : 2024-09-17T16:42:36Z
+42bad68 : 2024-09-18T14:32:59Z
+2524c8e : 2024-09-19T10:20:22Z
+c6f3282 : 2024-09-19T10:24:41Z
+
+Total picks (9)
+
+To discuss (1):
+#503 : [0.76] Fix SVC for lineBreakModeIOS : https://github.com/reactwg/react-native-releases/issues/503
+```
+
+### Verbose
 
 ```
 Target release 0.76.0-rc1
