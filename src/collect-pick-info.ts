@@ -14,11 +14,11 @@
 
 import { parseCommitLinks, parsePullRequestLinks } from "./parsing";
 import {
-  queryCommitInfo,
-  queryProjectID,
-  queryProjectInbox,
-  queryPullRequest,
-  queryCommitFilesChanged,
+    queryCommitFilesChanged,
+    queryCommitInfo,
+    queryProjectID,
+    queryProjectInbox,
+    queryPullRequest,
 } from "./queries";
 
 // accept sort argument from bun argv, either "asc" or "desc" from --sort=asc
@@ -42,17 +42,17 @@ const fmtBold = "\x1b[1m";
 const maxWidth = process.stdout.columns;
 
 function formatFileCollisions(files: string[]): string {
-  const prefix = ' - ';
-  const output: string[] = []; 
+  const prefix = " - ";
+  const output: string[] = [];
   const limit = prefix.length + 4;
   for (const file of files) {
     let label = file;
-    if ((file.length + prefix.length) > maxWidth) {
-      label = '...' + file.substr(file.length + prefix.length + 3 - maxWidth);
+    if (file.length + prefix.length > maxWidth) {
+      label = "..." + file.substr(file.length + prefix.length + 3 - maxWidth);
     }
     output.push(`${prefix}${fmtRed}${fmtBold}${label}${fmtReset}`);
   }
-  return output.join('\n');
+  return output.join("\n");
 }
 
 // accept argument from bun argv
@@ -66,7 +66,7 @@ if (!targetRelease) {
   const releaseRegex = /^0\.\d+\.\d+-rc\d+$/;
   if (!releaseRegex.test(targetRelease)) {
     console.error(
-      "Please provide a targetRelease in the format of '0.76.0-rc3'"
+      "Please provide a targetRelease in the format of '0.76.0-rc3'",
     );
     process.exit(1);
   } else {
@@ -102,7 +102,9 @@ for (const issue of inboxIssues) {
     for (const pullRequest of pullRequestLinks) {
       // get the pull request number on the end
       const prData = await queryPullRequest(
-        Number.parseInt(pullRequest.substring(pullRequest.lastIndexOf("/") + 1))
+        Number.parseInt(
+          pullRequest.substring(pullRequest.lastIndexOf("/") + 1),
+        ),
       );
 
       if (prData) {
@@ -137,7 +139,7 @@ for (const issue of inboxIssues) {
   }
 
   // Check for files where collisions are likely
-  for (const {files} of output) {
+  for (const { files } of output) {
     for (const file of files) {
       const count = allFiles.get(file) ?? 0;
       allFiles.set(file, count + 1);
@@ -160,7 +162,9 @@ const sortedPicks = allPickItems.sort((a, b) => {
 
 for (const pick of sortedPicks) {
   console.log(formatResultLine(pick.commitHash, pick.createdAt, pick.title));
-  const collisions = Array.from(pick.files).filter(file => (allFiles.get(file) ?? 0) > 1);
+  const collisions = Array.from(pick.files).filter(
+    (file) => (allFiles.get(file) ?? 0) > 1,
+  );
   console.log(formatFileCollisions(collisions));
 }
 
