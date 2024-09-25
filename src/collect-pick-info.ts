@@ -18,6 +18,7 @@ import {
   queryProjectID,
   queryProjectInbox,
   queryPullRequest,
+  queryCommitFilesChanged,
 } from "./queries";
 
 // accept sort argument from bun argv, either "asc" or "desc" from --sort=asc
@@ -32,6 +33,26 @@ const verboseArg =
 function formatResultLine(commitHash: string, date: string, title: string) {
   const line = `${commitHash.substring(0, 7)} : ${date}`;
   return verboseArg ? `${line} : ${title}` : line;
+}
+
+const fmtRed = "\x1b[31m";
+const fmtReset = "\x1b[0m";
+const fmtBold = "\x1b[1m";
+
+const maxWidth = process.stdout.columns;
+
+function formatFileCollisions(files: string[]): string {
+  const prefix = ' - ';
+  const output: string[] = []; 
+  const limit = prefix.length + 4;
+  for (const file of files) {
+    let label = file;
+    if ((file.length + prefix.length) > maxWidth) {
+      label = '...' + file.substr(file.length + prefix.length + 3 - maxWidth);
+    }
+    output.push(`${prefix}${fmtRed}${fmtBold}${label}${fmtReset}`);
+  }
+  return output.join('\n');
 }
 
 // accept argument from bun argv
@@ -54,7 +75,6 @@ if (!targetRelease) {
 }
 
 const itemsToDiscuss: string[] = [];
-let pickCount = 0;
 
 const projectID = await queryProjectID(targetRelease);
 const inboxIssues = await queryProjectInbox({ projectID, targetRelease });
@@ -63,9 +83,11 @@ interface PickInfo {
   commitHash: string;
   createdAt: string;
   title: string;
+  files: Set<string>;
 }
 
 const allPickItems: PickInfo[] = [];
+const allFiles: Map<string, number> = new Map();
 
 // foreach issue in inboxIssues, call query issue
 for (const issue of inboxIssues) {
@@ -84,7 +106,9 @@ for (const issue of inboxIssues) {
       );
 
       if (prData) {
-        output.push({ commitHash: prData.commitHash, createdAt, title });
+        const commitHash: string = prData.commitHash;
+        const files = queryCommitFilesChanged(commitHash);
+        output.push({ commitHash, createdAt, title, files });
       } else {
         flagged = true;
         // TODO
@@ -101,12 +125,22 @@ for (const issue of inboxIssues) {
       const commitHash = commit.substring(commit.lastIndexOf("/") + 1);
       const commitInfo = await queryCommitInfo(commitHash);
       const parseCommitMessage = commitInfo.message.split("\n");
+      const files = queryCommitFilesChanged(commitHash);
 
       output.push({
         commitHash: commitHash,
         createdAt: commitInfo.committedDate,
         title: `${title} (${parseCommitMessage[0]})`,
+        files,
       });
+    }
+  }
+
+  // Check for files where collisions are likely
+  for (const {files} of output) {
+    for (const file of files) {
+      const count = allFiles.get(file) ?? 0;
+      allFiles.set(file, count + 1);
     }
   }
 
@@ -126,6 +160,8 @@ const sortedPicks = allPickItems.sort((a, b) => {
 
 for (const pick of sortedPicks) {
   console.log(formatResultLine(pick.commitHash, pick.createdAt, pick.title));
+  const collisions = Array.from(pick.files).filter(file => (allFiles.get(file) ?? 0) > 1);
+  console.log(formatFileCollisions(collisions));
 }
 
 console.log(`\nTotal picks (${allPickItems.length})`);

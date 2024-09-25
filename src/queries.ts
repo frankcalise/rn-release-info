@@ -187,3 +187,15 @@ export async function queryCommitInfo(commitHash: string) {
 
   return data.repository.object;
 }
+
+export function queryCommitFilesChanged(sha: string): Set<string> {
+  const proc = Bun.spawnSync([
+    "gh",
+    "api",
+    "/repos/facebook/react-native/commits/" + sha,
+    "-q",
+    ".files[].filename",
+  ]);
+  return new Set(proc.stdout.toString().trim().split("\n"));
+}
+
