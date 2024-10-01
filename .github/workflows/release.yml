@@ -28,7 +28,7 @@ jobs:
         run: bun install
 
       - name: Build
-        run: bun build
+        run: bun run build
 
       - name: Run Semantic Release
         env:
