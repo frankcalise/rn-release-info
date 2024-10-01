@@ -12,7 +12,7 @@
  *    b. Record the hash and datetime
  */
 
-import { checkGhCliInstalled } from "./helpers"
+import { checkGhCliAuthenticated, checkGhCliInstalled } from "./helpers"
 import { parseCommitLinks, parsePullRequestLinks } from "./parsing"
 import { queryCommitInfo, queryProjectID, queryProjectInbox, queryPullRequest } from "./queries"
 
@@ -33,6 +33,13 @@ function formatResultLine(commitHash: string, date: string, title: string) {
 if (!checkGhCliInstalled()) {
   console.error("Error: The GitHub CLI ('gh') is not installed or not found in your PATH.")
   console.error("Please install it from https://cli.github.com/ before running this script.")
+  process.exit(1)
+}
+
+// Check if the user is authenticated with `gh`
+if (!checkGhCliAuthenticated()) {
+  console.error("Error: You are not authenticated with the GitHub CLI ('gh').")
+  console.error("Please run 'gh auth login' to authenticate before running this script.")
   process.exit(1)
 }
 
@@ -72,6 +79,8 @@ for (const issue of inboxIssues) {
 
   let flagged = false
   const output: PickInfo[] = []
+
+  console.log({ body })
 
   // look for pull requests in the issue body
   const pullRequestLinks = parsePullRequestLinks(body)
