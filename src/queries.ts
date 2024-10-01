@@ -99,7 +99,7 @@ export async function queryProjectInbox({
 
     const statusField = filteredFieldValues.find((field: any) => field?.field.name === "Status")
     const targetReleaseField = filteredFieldValues.find(
-      (field: any) => field?.field.name === "Target Release"
+      (field: any) => field?.field.name === "Target Release",
     )
     const titleField = filteredFieldValues.find((field: any) => field?.field.name === "Title")
 

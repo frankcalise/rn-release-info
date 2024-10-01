@@ -42,7 +42,7 @@ export function findMergeComment(comments: any[]) {
   const botComment = comments.find(
     (comment) =>
       comment.author.login === "react-native-bot" &&
-      comment.body.includes("This pull request was successfully merged by")
+      comment.body.includes("This pull request was successfully merged by"),
   )
 
   if (botComment) {
