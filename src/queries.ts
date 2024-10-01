@@ -96,17 +96,17 @@ export async function queryProjectInbox({
     const fieldValues = item.fieldValues.nodes;
     // filter fieldValues out if it is an empty object
     const filteredFieldValues = fieldValues.filter(
-      (field: any) => Object.keys(field).length > 0
+      (field: any) => Object.keys(field).length > 0,
     );
 
     const statusField = filteredFieldValues.find(
-      (field: any) => field?.field.name === "Status"
+      (field: any) => field?.field.name === "Status",
     );
     const targetReleaseField = filteredFieldValues.find(
-      (field: any) => field?.field.name === "Target Release"
+      (field: any) => field?.field.name === "Target Release",
     );
     const titleField = filteredFieldValues.find(
-      (field: any) => field?.field.name === "Title"
+      (field: any) => field?.field.name === "Title",
     );
 
     if (statusField !== undefined && targetReleaseField !== undefined) {
@@ -151,7 +151,7 @@ export async function queryPullRequest(num: number) {
   const data = JSON.parse(output).data;
 
   const mergeInfo = findMergeComment(
-    data.repository.pullRequest.comments.nodes
+    data.repository.pullRequest.comments.nodes,
   );
 
   return mergeInfo;
@@ -186,4 +186,15 @@ export async function queryCommitInfo(commitHash: string) {
   const data = JSON.parse(output).data;
 
   return data.repository.object;
+}
+
+export function queryCommitFilesChanged(sha: string): Set<string> {
+  const proc = Bun.spawnSync([
+    "gh",
+    "api",
+    "/repos/facebook/react-native/commits/" + sha,
+    "-q",
+    ".files[].filename",
+  ]);
+  return new Set(proc.stdout.toString().trim().split("\n"));
 }
