@@ -1,5 +1,5 @@
 {
-  "name": "gh-project-api",
+  "name": "rn-release-info",
   "version": "0.0.1",
   "main": "dist/collect-pick-info.js",
   "types": "dist/collect-pick-info.d.ts",
@@ -8,6 +8,9 @@
   "scripts": {
     "build": "bun run build.mjs",
     "prepublishOnly": "bun run build"
+  },
+  "bin": {
+    "rn-release-info": "dist/collect-pick-info.js"
   },
   "files": [
     "dist"
@@ -26,5 +29,9 @@
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "semi": false
   }
 }
