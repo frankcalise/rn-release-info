@@ -1,4 +1,4 @@
-import { findMergeComment } from "./parsing";
+import { findMergeComment } from "./parsing"
 
 export async function queryProjectID(targetRelease: string): Promise<string> {
   const query = `
@@ -12,28 +12,28 @@ export async function queryProjectID(targetRelease: string): Promise<string> {
         }
       }
     }
-  `;
+  `
 
-  const proc = Bun.spawn(["gh", "api", "graphql", "-f", `query=${query}`]);
+  const proc = Bun.spawn(["gh", "api", "graphql", "-f", `query=${query}`])
 
-  const queryResponse = await new Response(proc.stdout).text();
-  const data = JSON.parse(queryResponse).data;
+  const queryResponse = await new Response(proc.stdout).text()
+  const data = JSON.parse(queryResponse).data
 
   // find the project id where the title includes the first two numbers of the target release
   const project = data.organization.projectsV2.nodes.find((node: any) => {
-    const semVer = targetRelease.split(".");
-    return node.title.includes(`${semVer[0]}.${semVer[1]}`);
-  });
+    const semVer = targetRelease.split(".")
+    return node.title.includes(`${semVer[0]}.${semVer[1]}`)
+  })
 
-  return project.id;
+  return project.id
 }
 
 export async function queryProjectInbox({
   projectID,
   targetRelease,
 }: {
-  projectID: string;
-  targetRelease: string;
+  projectID: string
+  targetRelease: string
 }) {
   const query = `
    {
@@ -84,30 +84,24 @@ export async function queryProjectInbox({
         }
       }
     }
-  `;
+  `
 
-  const proc = Bun.spawn(["gh", "api", "graphql", "-f", `query=${query}`]);
+  const proc = Bun.spawn(["gh", "api", "graphql", "-f", `query=${query}`])
 
-  const queryResponse = await new Response(proc.stdout).text();
-  const data = JSON.parse(queryResponse).data.node.items.nodes;
+  const queryResponse = await new Response(proc.stdout).text()
+  const data = JSON.parse(queryResponse).data.node.items.nodes
 
   // Find the issues in group (requested target release) that are in the "Inbox" status
   const filteredIssues = data.filter((item: any) => {
-    const fieldValues = item.fieldValues.nodes;
+    const fieldValues = item.fieldValues.nodes
     // filter fieldValues out if it is an empty object
-    const filteredFieldValues = fieldValues.filter(
-      (field: any) => Object.keys(field).length > 0,
-    );
+    const filteredFieldValues = fieldValues.filter((field: any) => Object.keys(field).length > 0)
 
-    const statusField = filteredFieldValues.find(
-      (field: any) => field?.field.name === "Status",
-    );
+    const statusField = filteredFieldValues.find((field: any) => field?.field.name === "Status")
     const targetReleaseField = filteredFieldValues.find(
       (field: any) => field?.field.name === "Target Release",
-    );
-    const titleField = filteredFieldValues.find(
-      (field: any) => field?.field.name === "Title",
-    );
+    )
+    const titleField = filteredFieldValues.find((field: any) => field?.field.name === "Title")
 
     if (statusField !== undefined && targetReleaseField !== undefined) {
       return (
@@ -115,17 +109,17 @@ export async function queryProjectInbox({
         statusField.name === "Inbox" &&
         (targetReleaseField.name as string).indexOf(targetRelease) > -1 &&
         titleField.text.indexOf("Test Report") === -1
-      );
+      )
     }
-    return false;
-  });
+    return false
+  })
 
-  return filteredIssues;
+  return filteredIssues
 }
 
 export async function queryPullRequest(num: number) {
-  const owner = "facebook";
-  const repo = "react-native";
+  const owner = "facebook"
+  const repo = "react-native"
 
   const query = `
     {
@@ -143,18 +137,16 @@ export async function queryPullRequest(num: number) {
         }
       }
     }
-  `;
+  `
 
-  const proc = Bun.spawn(["gh", "api", "graphql", "-f", `query=${query}`]);
+  const proc = Bun.spawn(["gh", "api", "graphql", "-f", `query=${query}`])
 
-  const output = await new Response(proc.stdout).text();
-  const data = JSON.parse(output).data;
+  const output = await new Response(proc.stdout).text()
+  const data = JSON.parse(output).data
 
-  const mergeInfo = findMergeComment(
-    data.repository.pullRequest.comments.nodes,
-  );
+  const mergeInfo = findMergeComment(data.repository.pullRequest.comments.nodes)
 
-  return mergeInfo;
+  return mergeInfo
 }
 
 export async function queryCommitInfo(commitHash: string) {
@@ -173,19 +165,13 @@ export async function queryCommitInfo(commitHash: string) {
       }
     }
   }
-}`;
+}`
 
-  const proc = Bun.spawn([
-    "gh",
-    "api",
-    "graphql",
-    "-f",
-    `query=${query.trim()}`,
-  ]);
-  const output = await new Response(proc.stdout).text();
-  const data = JSON.parse(output).data;
+  const proc = Bun.spawn(["gh", "api", "graphql", "-f", `query=${query.trim()}`])
+  const output = await new Response(proc.stdout).text()
+  const data = JSON.parse(output).data
 
-  return data.repository.object;
+  return data.repository.object
 }
 
 export function queryCommitFilesChanged(sha: string): Set<string> {
@@ -195,6 +181,6 @@ export function queryCommitFilesChanged(sha: string): Set<string> {
     "/repos/facebook/react-native/commits/" + sha,
     "-q",
     ".files[].filename",
-  ]);
-  return new Set(proc.stdout.toString().trim().split("\n"));
+  ])
+  return new Set(proc.stdout.toString().trim().split("\n"))
 }

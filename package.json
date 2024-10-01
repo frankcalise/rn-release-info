@@ -1,11 +1,41 @@
 {
-  "name": "gh-project-api",
-  "module": "src/collect-pick-info.ts",
-  "type": "module",
+  "name": "rn-release-info",
+  "version": "0.0.1",
+  "main": "dist/collect-pick-info.js",
+  "types": "dist/collect-pick-info.d.ts",
+  "scripts": {
+    "ci:publish": "bun run --bun semantic-release",
+    "build": "bun run build.mjs",
+    "prepublishOnly": "bun run build"
+  },
+  "bin": {
+    "rn-release-info": "dist/collect-pick-info.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/frankcalise/gh-project-api#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frankcalise/gh-project-api.git"
+  },
+  "bugs": "https://github.com/frankcalise/gh-project-api/issues",
+  "author": "Frank Calise <fcalise@gmail.com>",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/npm": "^12.0.1",
+    "@types/bun": "latest",
+    "bun-plugin-dts": "^0.2.3",
+    "semantic-release": "^24.1.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "semi": false,
+    "trailingComma": "all"
   }
 }
