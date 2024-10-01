@@ -1,6 +1,6 @@
 {
   "name": "rn-release-info",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "dist/collect-pick-info.js",
   "types": "dist/collect-pick-info.d.ts",
   "scripts": {
