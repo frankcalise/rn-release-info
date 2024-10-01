@@ -80,15 +80,13 @@ for (const issue of inboxIssues) {
   let flagged = false
   const output: PickInfo[] = []
 
-  console.log({ body })
-
   // look for pull requests in the issue body
   const pullRequestLinks = parsePullRequestLinks(body)
   if (pullRequestLinks.length > 0) {
     for (const pullRequest of pullRequestLinks) {
       // get the pull request number on the end
       const prData = await queryPullRequest(
-        Number.parseInt(pullRequest.substring(pullRequest.lastIndexOf("/") + 1))
+        Number.parseInt(pullRequest.substring(pullRequest.lastIndexOf("/") + 1)),
       )
 
       if (prData) {
