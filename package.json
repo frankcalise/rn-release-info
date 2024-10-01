@@ -3,8 +3,6 @@
   "version": "0.0.1",
   "main": "dist/collect-pick-info.js",
   "types": "dist/collect-pick-info.d.ts",
-  "module": "src/collect-pick-info.ts",
-  "type": "module",
   "scripts": {
     "ci:publish": "bun run --bun semantic-release",
     "build": "bun run build.mjs",
