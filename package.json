@@ -16,10 +16,7 @@
   ],
   "license": "MIT",
   "homepage": "https://github.com/frankcalise/gh-project-api#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/frankcalise/gh-project-api.git"
-  },
+  "repository": "https://github.com/frankcalise/gh-project-api",
   "bugs": "https://github.com/frankcalise/gh-project-api/issues",
   "author": "Frank Calise <fcalise@gmail.com>",
   "devDependencies": {
