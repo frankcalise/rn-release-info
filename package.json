@@ -1,9 +1,28 @@
 {
   "name": "gh-project-api",
+  "version": "0.0.1",
+  "main": "dist/collect-pick-info.js",
+  "types": "dist/collect-pick-info.d.ts",
   "module": "src/collect-pick-info.ts",
   "type": "module",
+  "scripts": {
+    "build": "bun run build.mjs",
+    "prepublishOnly": "bun run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/frankcalise/gh-project-api#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frankcalise/gh-project-api.git"
+  },
+  "bugs": "https://github.com/frankcalise/gh-project-api/issues",
+  "author": "Frank Calise <fcalise@gmail.com>",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "bun-plugin-dts": "^0.2.3"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
