@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 /**
  *
  *  1. Get the project ID for the latest React Native Release project based on argv version, format: React Native 0.76 Releases
