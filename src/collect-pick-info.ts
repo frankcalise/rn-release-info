@@ -27,7 +27,7 @@ import {
 // accept sort argument from bun argv, either "asc" or "desc" from --sort=asc
 const sortArg = process.argv.includes("--sort")
   ? process.argv[process.argv.indexOf("--sort") + 1]
-  : "desc"
+  : "asc"
 
 // accept verbose from bun argv as --verbose or -v
 const verboseArg = process.argv.includes("--verbose") || process.argv.includes("-v")
@@ -60,7 +60,7 @@ const maxWidth = process.stdout.columns
 function formatFileCollisions(files: string[]): string {
   const prefix = " - "
   const output: string[] = []
-  const limit = prefix.length + 4
+
   for (const file of files) {
     let label = file
     if (file.length + prefix.length > maxWidth) {
@@ -69,6 +69,12 @@ function formatFileCollisions(files: string[]): string {
     output.push(`${prefix}${fmtRed}${fmtBold}${label}${fmtReset}`)
   }
   return output.join("\n")
+}
+
+function formatDiscussLine({ issueNumber, title, url, baseRefName, headRefName }: PickInfo) {
+  return `${issueNumber} : ${title}\n - branch : ${baseRefName} ${
+    headRefName !== undefined ? `<- ${headRefName}` : ""
+  }\n - ${url}`
 }
 
 // accept argument from bun argv
@@ -98,9 +104,14 @@ interface PickInfo {
   createdAt: string
   title: string
   files: Set<string>
+  url: string
+  baseRefName?: string
+  headRefName?: string
+  issueNumber: string
 }
 
 const allPickItems: PickInfo[] = []
+const discussItems: PickInfo[] = []
 const allFiles: Map<string, number> = new Map()
 
 // foreach issue in inboxIssues, call query issue
@@ -108,6 +119,7 @@ for (const issue of inboxIssues) {
   const { number: issueNumber, title, body, createdAt, url } = issue.content
 
   let flagged = false
+  let prData = null
   const output: PickInfo[] = []
 
   // look for pull requests in the issue body
@@ -115,14 +127,22 @@ for (const issue of inboxIssues) {
   if (pullRequestLinks.length > 0) {
     for (const pullRequest of pullRequestLinks) {
       // get the pull request number on the end
-      const prData = await queryPullRequest(
+      prData = await queryPullRequest(
         Number.parseInt(pullRequest.substring(pullRequest.lastIndexOf("/") + 1)),
       )
 
-      if (prData) {
+      if (prData.commitHash) {
         const commitHash: string = prData.commitHash
         const files = queryCommitFilesChanged(commitHash)
-        output.push({ commitHash, createdAt, title, files })
+        output.push({
+          commitHash: prData.commitHash,
+          createdAt,
+          title,
+          issueNumber,
+          url,
+          baseRefName: prData.baseRefName,
+          files,
+        })
       } else {
         flagged = true
         // TODO
@@ -146,6 +166,8 @@ for (const issue of inboxIssues) {
         createdAt: commitInfo.committedDate,
         title: `${title} (${parseCommitMessage[0]})`,
         files,
+        issueNumber,
+        url,
       })
     }
   }
@@ -161,7 +183,15 @@ for (const issue of inboxIssues) {
   if (output.length > 0 && !flagged) {
     allPickItems.push(...output)
   } else {
-    itemsToDiscuss.push(`#${issueNumber} : ${title} : ${url}`)
+    discussItems.push({
+      createdAt,
+      title,
+      issueNumber,
+      url,
+      baseRefName: prData?.baseRefName,
+      commitHash: "",
+      files: new Set(),
+    })
   }
 }
 
@@ -179,7 +209,16 @@ for (const pick of sortedPicks) {
 }
 
 console.log(`\nTotal picks (${allPickItems.length})`)
-if (itemsToDiscuss.length > 0) {
-  console.log(`\nTo discuss (${itemsToDiscuss.length}):`)
-  itemsToDiscuss.forEach((item) => console.log(item))
+if (discussItems.length > 0) {
+  // sort discussItems
+  const sortedDiscussItems = discussItems.sort((a, b) => {
+    return sortArg === "asc"
+      ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  })
+
+  console.log(`\nTo discuss (${discussItems.length}):`)
+  for (const discuss of sortedDiscussItems) {
+    console.log(formatDiscussLine(discuss))
+  }
 }

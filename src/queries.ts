@@ -125,6 +125,9 @@ export async function queryPullRequest(num: number) {
     {
       repository(owner: "${owner}", name: "${repo}") {
         pullRequest(number: ${num}) {
+          baseRefName
+          headRefName
+          state
           comments(first: 50) {
             nodes {
               author {
@@ -143,10 +146,16 @@ export async function queryPullRequest(num: number) {
 
   const output = await new Response(proc.stdout).text()
   const data = JSON.parse(output).data
+  const prData = data.repository.pullRequest
 
-  const mergeInfo = findMergeComment(data.repository.pullRequest.comments.nodes)
+  const mergeInfo = findMergeComment(prData.comments.nodes)
 
-  return mergeInfo
+  return {
+    ...mergeInfo,
+    baseRefName: prData.baseRefName,
+    headRefName: prData.headRefName,
+    state: prData.state,
+  }
 }
 
 export async function queryCommitInfo(commitHash: string) {
