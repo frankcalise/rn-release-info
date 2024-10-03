@@ -1,3 +1,10 @@
+## [0.1.2](https://github.com/frankcalise/gh-project-api/compare/v0.1.1...v0.1.2) (2024-10-03)
+
+
+### Bug Fixes
+
+* collect more PR info, sort discuss items ([#4](https://github.com/frankcalise/gh-project-api/issues/4) by [@frankcalise](https://github.com/frankcalise)) ([145968d](https://github.com/frankcalise/gh-project-api/commit/145968d79dc0e37f913aeb05d0ac145c720e6eaf))
+
 ## [0.1.1](https://github.com/frankcalise/gh-project-api/compare/v0.1.0...v0.1.1) (2024-10-02)
 
 
