@@ -1,4 +1,5 @@
 import { findMergeComment } from "./parsing"
+import type { InboxStatus, ReleaseNode } from "./types"
 
 export async function queryProjectID(targetRelease: string): Promise<string> {
   const query = `
@@ -31,9 +32,11 @@ export async function queryProjectID(targetRelease: string): Promise<string> {
 export async function queryProjectInbox({
   projectID,
   targetRelease,
+  inboxStatus,
 }: {
   projectID: string
   targetRelease: string
+  inboxStatus: InboxStatus
 }) {
   const query = `
    {
@@ -106,7 +109,7 @@ export async function queryProjectInbox({
     if (statusField !== undefined && targetReleaseField !== undefined) {
       return (
         // TODO if this is an older RC that you want to check how it would have run, status needs to be Done / Picked
-        statusField.name === "Inbox" &&
+        statusField.name === inboxStatus &&
         (targetReleaseField.name as string).indexOf(targetRelease) > -1 &&
         titleField.text.indexOf("Test Report") === -1
       )
@@ -192,4 +195,27 @@ export function queryCommitFilesChanged(sha: string): Set<string> {
     ".files[].filename",
   ])
   return new Set(proc.stdout.toString().trim().split("\n"))
+}
+
+export async function queryReleases(): Promise<string[]> {
+  const query = `
+  {
+    repository(owner: "facebook", name: "react-native") {
+      releases(first: 20, orderBy: { field: CREATED_AT, direction: DESC }) {
+        nodes {
+          name
+          tagName
+          createdAt
+          publishedAt
+          url
+        }
+      }
+    }
+  }`
+
+  const proc = Bun.spawn(["gh", "api", "graphql", "-f", `query=${query.trim()}`])
+  const output = await new Response(proc.stdout).text()
+  const data = JSON.parse(output).data
+
+  return data.repository.releases.nodes.map((release: ReleaseNode) => release.name)
 }
