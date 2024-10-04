@@ -22,7 +22,9 @@ import {
   queryProjectID,
   queryProjectInbox,
   queryPullRequest,
+  queryReleases,
 } from "./queries"
+import type { InboxStatus } from "./types"
 
 // accept sort argument from bun argv, either "asc" or "desc" from --sort=asc
 const sortArg = process.argv.includes("--sort")
@@ -72,11 +74,12 @@ function formatFileCollisions(files: string[]): string {
 }
 
 function formatDiscussLine({ issueNumber, title, url, baseRefName, headRefName }: PickInfo) {
-  return `${issueNumber} : ${title}\n - branch : ${baseRefName} ${
+  return `${issueNumber} : ${title}\n - branch : ${baseRefName ?? "unknown?"} ${
     headRefName !== undefined ? `<- ${headRefName}` : ""
   }\n - ${url}`
 }
 
+let inboxStatus: InboxStatus = "Inbox"
 // accept argument from bun argv
 const targetRelease = process.argv[2]
 
@@ -84,20 +87,27 @@ if (!targetRelease) {
   console.error("Please provide a targetRelease in the format of '0.76.0-rc3'")
   process.exit(1)
 } else {
-  // regex for 0.76.0-rc3 format
-  const releaseRegex = /^0\.\d+\.\d+-rc\d+$/
+  // regex for 0.76.0-rc3 or 0.75.4
+  const releaseRegex = /^0\.\d+\.\d+(-rc\d+)?$/
   if (!releaseRegex.test(targetRelease)) {
-    console.error("Please provide a targetRelease in the format of '0.76.0-rc3'")
+    console.error("Please provide a targetRelease in the format of `0.75.4` or `0.76.0-rc3`")
     process.exit(1)
   } else {
     console.log("Target release", targetRelease)
+
+    // check if this is a release that already exists
+    // if so, we'll have to query the project board for Done / Picked instead of Inbox
+    const recentReleases = await queryReleases()
+
+    // there is a discrepancy between the project board group RC name and published release name (the dot)
+    if (recentReleases.includes(targetRelease.replace("-rc", "-rc."))) {
+      inboxStatus = "Done / Picked"
+    }
   }
 }
 
-const itemsToDiscuss: string[] = []
-
 const projectID = await queryProjectID(targetRelease)
-const inboxIssues = await queryProjectInbox({ projectID, targetRelease })
+const inboxIssues = await queryProjectInbox({ projectID, targetRelease, inboxStatus })
 
 interface PickInfo {
   commitHash: string
@@ -222,3 +232,5 @@ if (discussItems.length > 0) {
     console.log(formatDiscussLine(discuss))
   }
 }
+
+process.exit(0)
