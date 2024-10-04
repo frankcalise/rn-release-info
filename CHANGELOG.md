@@ -1,3 +1,10 @@
+# [0.2.0](https://github.com/frankcalise/gh-project-api/compare/v0.1.2...v0.2.0) (2024-10-04)
+
+
+### Features
+
+* able to query previous releases ([#9](https://github.com/frankcalise/gh-project-api/issues/9) by [@frankcalise](https://github.com/frankcalise)) ([510c920](https://github.com/frankcalise/gh-project-api/commit/510c9205d30f4e014c34b25c1a86b4575043b675))
+
 ## [0.1.2](https://github.com/frankcalise/gh-project-api/compare/v0.1.1...v0.1.2) (2024-10-03)
 
 
