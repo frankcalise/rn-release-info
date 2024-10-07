@@ -107,7 +107,7 @@ if (!targetRelease) {
 }
 
 const projectID = await queryProjectID(targetRelease)
-const inboxIssues = await queryProjectInbox({ projectID, targetRelease, inboxStatus })
+const inboxItems = await queryProjectInbox({ projectID, targetRelease, inboxStatus })
 
 interface PickInfo {
   commitHash: string
@@ -124,13 +124,31 @@ const allPickItems: PickInfo[] = []
 const discussItems: PickInfo[] = []
 const allFiles: Map<string, number> = new Map()
 
-// foreach issue in inboxIssues, call query issue
-for (const issue of inboxIssues) {
-  const { number: issueNumber, title, body, createdAt, url } = issue.content
+// foreach item in inboxItems, check if it's a PR directly added or issue
+// if issue, query for the information, if PR add to discuss
+for (const item of inboxItems) {
+  const { number: issueNumber, title, body, createdAt, url } = item.content
+
+  // console.log({ item })
 
   let flagged = false
   let prData = null
   const output: PickInfo[] = []
+
+  // check if a PR was added directly to the project board rather than an issue via the template
+  if (item.content.__typename === "PullRequest") {
+    discussItems.push({
+      createdAt,
+      title,
+      issueNumber,
+      url,
+      baseRefName: item.content.baseRefName,
+      headRefName: item.content.headRefName,
+      commitHash: "",
+      files: new Set(),
+    })
+    continue
+  }
 
   // look for pull requests in the issue body
   const pullRequestLinks = parsePullRequestLinks(body)

@@ -1,7 +1,7 @@
 function getLinkToCommitOrPullRequestSection(issueBody: string): string {
   // Use a regular expression to find the "Link to commit or PR to be picked" section
   const linkSectionRegex = /### Link to commit or PR to be picked\s+([\s\S]*?)\s+###/i
-  const sectionMatch = issueBody.match(linkSectionRegex)
+  const sectionMatch = issueBody?.match(linkSectionRegex)
 
   if (!sectionMatch) {
     return ""
@@ -15,7 +15,7 @@ function getLinkToCommitOrPullRequestSection(issueBody: string): string {
 
 function getDescriptionSection(issueBody: string): string {
   const descriptionRegex = /### Description\s*([\s\S]*?)\s*(?=###|$)/i
-  const sectionMatch = issueBody.match(descriptionRegex)
+  const sectionMatch = issueBody?.match(descriptionRegex)
 
   if (!sectionMatch) {
     return ""
@@ -74,7 +74,7 @@ export function parseCommitLinks(issueBody: string): string[] {
     if (descriptionContent.length === 0) {
       // try to just match commit bullets in the entire body from
       // submissions not following the GH template (huntie xD)
-      const bodyMatches = issueBody.match(commitLinkRegex)
+      const bodyMatches = issueBody?.match(commitLinkRegex)
       return bodyMatches || []
     } else {
       // Find all matches of the pull request links

@@ -74,12 +74,24 @@ export async function queryProjectInbox({
                 }
               }
               content {
+                __typename
                 ... on Issue {
                   number
                   title
                   body
                   createdAt
                   url
+                }
+                ... on PullRequest {  
+                  number
+                  title
+                  body
+                  createdAt
+                  url
+                  mergedAt
+                  state
+                  baseRefName
+                  headRefName
                 }
               }
             }
