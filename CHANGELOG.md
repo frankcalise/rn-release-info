@@ -1,3 +1,10 @@
+# [0.3.0](https://github.com/frankcalise/gh-project-api/compare/v0.2.0...v0.3.0) (2024-10-07)
+
+
+### Features
+
+* parse PRs added to project board ([#10](https://github.com/frankcalise/gh-project-api/issues/10) by [@frankcalise](https://github.com/frankcalise)) ([40afd22](https://github.com/frankcalise/gh-project-api/commit/40afd22a278f9015e664f3caac247bf41597fbd4))
+
 # [0.2.0](https://github.com/frankcalise/gh-project-api/compare/v0.1.2...v0.2.0) (2024-10-04)
 
 
