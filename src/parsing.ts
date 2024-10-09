@@ -39,7 +39,8 @@ export function parsePullRequestLinks(issueBody: string): string[] {
 }
 
 export function findMergeComment(comments: any[]) {
-  const botComment = comments.find(
+  let botComment = null
+  botComment = comments.find(
     (comment) =>
       comment.author.login === "react-native-bot" &&
       comment.body.includes("This pull request was successfully merged by"),
@@ -52,6 +53,21 @@ export function findMergeComment(comments: any[]) {
     const timestamp = botComment.createdAt
 
     return { commitHash, timestamp }
+  } else {
+    // try parsing from facebook-github-bot
+    botComment = comments.find(
+      (comment) =>
+        comment.author.login === "facebook-github-bot" &&
+        comment.body.includes("This pull request has been merged in"),
+    )
+
+    if (botComment) {
+      const commitHashMatch = botComment.body.match(/@([a-f0-9]{40})/)
+      const commitHash = commitHashMatch ? commitHashMatch[1] : null
+      const timestamp = botComment.createdAt
+
+      return { commitHash, timestamp }
+    }
   }
 
   return null
